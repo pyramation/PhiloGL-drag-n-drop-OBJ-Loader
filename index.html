@@ -1,0 +1,121 @@
+<script>
+    var mObj;
+    var look;
+</script>
+
+<script type="text/javascript" src="/javascript/philogl/build/PhiloGL.js"></script>
+<script type="text/javascript" src="/javascript/jquery.min.js"></script> 
+<script type="text/javascript" src="/javascript/jquery.json-2.2.min.js"></script> 
+<script type="text/javascript" src="/javascript/setupPhiloGL.js"></script>
+<script type="text/javascript" src="/javascript/Obj.js"></script> 
+
+<script id="shader-fs" type="x-shader/x-fragment">
+    #ifdef GL_ES
+    precision highp float;
+    #endif
+
+    varying vec4 vColor;
+
+    void main(void) {
+        gl_FragColor = vColor;
+    }
+</script>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+    attribute vec4 aVertexColor;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+
+    varying vec4 vColor;
+
+    void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        vColor = aVertexColor;
+    }
+</script>
+
+<style>
+    canvas, div#controls {
+        box-shadow: 0 0 10px #000;
+        -webkit-box-shadow: 0 0 10px #000;
+        -moz-box-shadow: 0 0 10px #000;
+        -o-box-shadow: 0 0 10px #000;
+    }
+</style>
+
+<canvas id="viscanvas" style="border: none;" width="500" height="500"></canvas>
+
+<script>
+  document.body.onload = function () {
+    initGL();
+  }
+</script>
+
+<div id="content"> 
+    <p id="log" style="color: gray"></p> 
+    <p>Pick a file below or drag one into this area <br> <input type="file" id="file" /></p> 
+    <p><b>Name:</b> <span id="fname"></span><br> 
+    <b>File Size:</b> <span id="fsize"></span><br> 
+    <b>Content:</b> <br><br> <span id="file-content"></span> 
+    </p> 
+</div> 
+ 
+<script>
+
+    // Content section used alot
+    var content = document.getElementById('content');
+ 
+    if (!window.FileReader) {
+        content.innerHTML = "<p>This browser doesnt support the File API</p>";
+        } else {
+ 
+        // Prints out file properties.
+        function displayFile(file) {
+            document.getElementById('fname').textContent = file.fileName;
+            document.getElementById('fsize').textContent = file.fileSize;
+ 
+            var reader = new FileReader();
+ 
+            reader.onload = function(event) {
+                mObj = readOBJ(event.target.result);
+                var JSONtext = $.toJSON(mObj);
+                document.getElementById('file-content').innerHTML = JSONtext;
+              //geometry.push( {obj:new PhiloGL.O3D.Model(jQuery.parseJSON(JSONtext))} );
+                geometry.push( {obj:new PhiloGL.O3D.Model(JSONtext)} );
+            };
+ 
+            reader.onerror = function() {
+                document.getElementById('file-content').innerHTML = 'Unable to read ' + file.fileName;
+            };
+ 
+            reader.readAsBinaryString(file);
+ 
+            look = file;
+        }
+ 
+        // Input handlers
+        document.getElementById('file').onchange = function() {
+            displayFile(this.files[0]);
+        };
+ 
+        // Reduce movement by adding invisible border
+        content.style.border = '4px solid transparent';
+ 
+        // Add dragging events
+        content.ondragenter = function() {
+            content.style.border = '4px solid #b1ecb3';
+            return false;
+        };
+ 
+        content.ondragover = function() { return false; };
+        content.ondragleave = function() { return false; };
+        content.ondrop = function(event) {
+            content.style.border = '4px solid transparent';
+            displayFile(event.dataTransfer.files[0]);
+            return false;
+        };
+    }
+  </script>
+
